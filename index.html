@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎵二重奏シミュレーター</title>
+    <title>🎶二重奏シミュレーター</title>
     <style>
         :root { --panel-width: 300px; }
         body { margin: 0; font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #ffffff; overflow: hidden; }
@@ -196,7 +196,7 @@
 
 <div id="ui-panel">
     <div class="panel-header" onclick="togglePanel()">
-        <h1 class="app-title">🎵二重奏シミュレーター</h1>
+        <h1 class="app-title">🎶二重奏シミュレーター</h1>
         <span id="toggle-text">閉じる</span>
     </div>
 
@@ -403,6 +403,10 @@
     let bowDirLocal = null;
     let bowLiftDirLocal = null;
     const BOW_ARM_POLE = new THREE.Vector3(-0.5, -0.25, 1.0);
+    // バイオリンを持つ方の手（左腕）の肘ポール: 四重奏シミュレーターと同じ「下側に曲げる」形
+    // （2026-11-20 ユーザー指示）。デフォルトポール (0.8, -0.15, -0.6) では肘が肩から横へ
+    // +0.32m・下へ -0.035m で上腕が水平に張っていたため、下支配へ。手の目標と付け根は不変。
+    const NECK_ARM_POLE = new THREE.Vector3(0.20, -1.0, -0.15);
     let musicStartCtxTime = 0;
     let bowElbowLocal = null;
     let violinXLocal = null;
@@ -1262,7 +1266,7 @@
         violinStringLocal = bg.worldToLocal(violin.string.getWorldPosition(new THREE.Vector3()));
         const fingerLocal = bg.worldToLocal(violin.finger.getWorldPosition(new THREE.Vector3()));
         violinFingerLocal = fingerLocal;
-        poseArmTo(personA.arms[1], fingerLocal);
+        poseArmTo(personA.arms[1], fingerLocal, NECK_ARM_POLE);
         const vgWorldQ = violin.group.getWorldQuaternion(new THREE.Quaternion());
         const bgInvQ = bg.getWorldQuaternion(new THREE.Quaternion()).invert();
         violinZLocal = new THREE.Vector3(0, 0, 1).applyQuaternion(vgWorldQ).applyQuaternion(bgInvQ).normalize();
@@ -1589,7 +1593,7 @@
                             const age = beatPos - vn[0];
                             vib = Math.sin(age * 2 * Math.PI * 2.2) * 0.0045 * Math.min(1, age / (vn[2] * 0.4));
                         }
-                        poseArmTo(personA.arms[1], smoothATarget(personA.arms[1], 'l', violinFingerLocal.clone().addScaledVector(violinXLocal, vib - lhShiftSm), 0.037));
+                        poseArmTo(personA.arms[1], smoothATarget(personA.arms[1], 'l', violinFingerLocal.clone().addScaledVector(violinXLocal, vib - lhShiftSm), 0.037), NECK_ARM_POLE);
                     }
                     // B (ピアノ): 両手の音の重心へ腰から寄り、密度で前のめり
                     let avg = 60;
