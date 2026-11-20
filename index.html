@@ -1361,8 +1361,11 @@
             }
             camera.position.copy(eyePos);
 
+            // 一人称: 基本向きは頭のワールド向きから得た視線方向（顔の前方=ローカル+z）のヨー・ピッチに一致させ、ドラッグ回転はその上に乗せる
+            const headQ = self.headParts.getWorldQuaternion(new THREE.Quaternion());
+            const gaze = new THREE.Vector3(0, 0, 1).applyQuaternion(headQ);
             const baseTargetRotation = new THREE.Quaternion().setFromEuler(
-                new THREE.Euler(0, self.rotation.y + Math.PI, 0, 'YXZ')
+                new THREE.Euler(Math.asin(Math.max(-1, Math.min(1, gaze.y))), Math.atan2(-gaze.x, -gaze.z), 0, 'YXZ')
             );
 
             const operationRotation = new THREE.Quaternion().setFromEuler(
@@ -1370,6 +1373,7 @@
             );
 
             camera.quaternion.copy(baseTargetRotation).multiply(operationRotation);
+            camera.rotation.z = 0; // 一人称ロールは毎フレーム0に戻す（シリーズ共通）
         }
 
         // 弓: 演奏中はバイオリンの発音に合わせて右手を滑らせる
@@ -1854,7 +1858,9 @@
     function switchView() {
         const order = ['3rd', 'A', 'B'];
         currentView = order[(order.indexOf(currentView) + 1) % order.length];
-        rotation.x = 0.15; rotation.y = 2.20;
+        // 一人称へ切り替えた時は視線方向がそのまま視界に入るようドラッグ回転を0に、三人称は従来の初期アングルに戻す（シリーズ共通の挙動に統一）
+        if (currentView === '3rd') { rotation.x = 0.15; rotation.y = 2.20; }
+        else { rotation.x = 0; rotation.y = 0; }
         if (camera) {
             camera.fov = 50;
             camera.updateProjectionMatrix();
@@ -1865,7 +1871,7 @@
     function shareToX() {
         const nA = document.getElementById('nameA').value || 'A', nB = document.getElementById('nameB').value || 'B';
         const hA = parseFloat(document.getElementById('heightA').value) || 158.0, hB = parseFloat(document.getElementById('heightB').value) || 171.5;
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${nA}(${hA.toFixed(1)}cm)と${nB}(${hB.toFixed(1)}cm)の二重奏体格差！\n#二重奏シミュレーター`)}&url=${encodeURIComponent(window.location.href)}`, '_blank');
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${nA}(${hA.toFixed(1)}cm)と${nB}(${hB.toFixed(1)}cm)の二重奏体格差！\n#二重奏シミュレーター\n${window.location.href}`)}`, '_blank');
     }
 
     init();
